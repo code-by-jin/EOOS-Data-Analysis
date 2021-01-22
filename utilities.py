@@ -111,7 +111,7 @@ def is_event(df, start_index, end_index, th_feces_change = 0.5, th_urine_change 
 def combine_close_events(df, start_indexes, end_indexes, th_duration = 60):
     dists = [s - e for s, e in zip(start_indexes[1:], end_indexes[:-1])]
     for i in reversed(range(len(dists))): # need to be in reverse order so that it won't throw off the subsequent indexes.
-        if dists[i] < th_duration:
+        if dists[i] < 15 or ((dists[i] < th_duration) and (df.loc[end_indexes[i]+1:end_indexes[i+1], 'flow'].count()<2)):
             start_indexes.pop(i+1)
             end_indexes.pop(i)
     return start_indexes, end_indexes
