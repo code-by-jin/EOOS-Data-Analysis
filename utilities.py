@@ -3,7 +3,7 @@ import os, io
 import numpy as np
 import datetime
 import pandas as pd
-pd.set_option("display.precision", 2)
+pd.set_option("display.precision", 3)
 from scipy.signal import argrelextrema
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -44,11 +44,11 @@ def plot_event(df, start_all = [], end_all=[]):
     ax.set_xlabel('Seconds',fontsize=30)
     ax.tick_params(axis='x', labelsize=20)
     ax.tick_params(axis='y', labelsize=20)
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
     ax.legend(loc='center left', fontsize = 20)
     ax2.set_ylabel("Urine Tank Volume (L)",color="blue",fontsize=30)
     ax2.tick_params(axis='y', labelsize=20)
-    ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax2.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
     for i, (s, e) in enumerate(zip(start_all, end_all)):
         x_s, x_e =s, e
         plt.axvline(x=x_s, ls='--', linewidth=1, color = 'purple', label=str(df.loc[x_s, 'date_time']))
@@ -64,19 +64,21 @@ def plot_derivative(df, start_all = [], end_all=[]):
     ax2 = ax.twinx()
     # make a plot
     ax.plot(df.index, df.loc[:, 'feces_derivative'], color="red", marker="^", label = "feces tank")
-    ax.scatter(df.index, df.loc[:, 'max_feces'], c='black', s=100, marker="o")
+    ax.scatter(df.index, df.loc[:, 'max_feces'], c='red', s=200, marker="s")
+    ax.scatter(df.index, df.loc[:, 'min_feces'], c='red', s=200, marker="o")
     ax.set_ylabel("Feces Tank Volume (L)",color="red", fontsize=30) # set y-axis label
     # make a plot with different y-axis using second axis object
     ax2.plot(df.index, df.loc[:, 'urine_derivative'], color="blue", marker="v", label = "urine tank")
-    ax2.scatter(df.index, df.loc[:, 'max_urine'], c='black', s=100, marker="o")
+    ax2.scatter(df.index, df.loc[:, 'max_urine'], c='blue', s=200, marker="s")
+    ax2.scatter(df.index, df.loc[:, 'min_urine'], c='blue', s=200, marker="o")
     ax.set_xlabel('Seconds',fontsize=30)
     ax.tick_params(axis='x', labelsize=20)
     ax.tick_params(axis='y', labelsize=20)
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
     ax.legend(loc='center left', fontsize = 20)
     ax2.set_ylabel("Urine Tank Volume (L)",color="blue",fontsize=30)
     ax2.tick_params(axis='y', labelsize=20)
-    ax2.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
+    ax2.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
     for i, (s, e) in enumerate(zip(start_all, end_all)):
         x_s, x_e =s, e
         plt.axvline(x=x_s, ls='--', linewidth=1, color = 'purple', label=str(df.loc[x_s, 'date_time']))
@@ -127,20 +129,62 @@ def adjust_start_index(df, start_indexes, end_indexes, th_flowmeter_before=300):
         last_end_index = end_indexes[i]
     return start_indexes
    
+
+def myboolrelextrema(data, comparator_0, comparator_1, axis=0, order=1, mode='clip'):
+    if((int(order) != order) or (order < 1)):
+        raise ValueError('Order must be an int >= 1')
+
+    datalen = data.shape[axis]
+    locs = np.arange(0, datalen)
+
+    results = np.ones(data.shape, dtype=bool)
+    main = data.take(locs, axis=axis, mode=mode)
+    for shift in range(1, order + 1):
+        plus = data.take(locs + shift, axis=axis, mode=mode)
+        minus = data.take(locs - shift, axis=axis, mode=mode)
+        results &= comparator_0(main, plus)
+        results &= comparator_1(main, minus)
+        if(~results.any()):
+            return results
+    return results
+
+    
+def myargrelextrema(data, comparator_0, comparator_1, axis=0, order=1, mode='clip'):
+
+    results = myboolrelextrema(data, comparator_0, comparator_1,
+                              axis, order, mode)
+    return np.nonzero(results)
+
+
+def get_local_max(df_event, column_name, th = 0.005):
+    index_max = list(myargrelextrema(df_event.loc[:, column_name].values, np.greater, np.greater_equal, order=15)[0])
+    index_min = list(myargrelextrema(df_event.loc[:, column_name].values, np.less, np.less_equal, order=15)[0])
+    return index_max, index_min
+    
 def process_event(df, start_index, end_index):
     df_event = df.loc[start_index:end_index].reset_index()
     df_event.loc[:, 'feces'] = df_event.loc[:, 'feces'] - df_event.loc[0, 'feces']
     df_event.loc[:, 'urine'] = df_event.loc[:, 'urine'] - df_event.loc[0, 'urine']
-#     df_event['min_feces'] = df_event.iloc[argrelextrema(df_event.feces_derivative.values, np.less_equal, 
-#                                                         order=1)[0]]['feces_derivative']
-#     df_event['min_urine'] = df_event.iloc[argrelextrema(df_event.urine_derivative.values, np.less_equal,
-#                                                         order=1)[0]]['urine_derivative']
-    df_event['max_feces'] = df_event.iloc[argrelextrema(df_event.feces_derivative.values, np.greater,
-                                                        order=5)[0]]['feces_derivative']
-    df_event['max_urine'] = df_event.iloc[argrelextrema(df_event.urine_derivative.values, np.greater,
-                                                        order=5)[0]]['urine_derivative']    
-    return df_event
+    index_max_feces, index_min_feces = get_local_max(df_event, 'feces_derivative', 0.005)
+    df_event['max_feces'] = df_event.iloc[index_max_feces]['feces_derivative']
+    df_event['min_feces'] = df_event.iloc[index_min_feces]['feces_derivative']
+
+    index_max_urine, index_min_urine = get_local_max(df_event, 'urine_derivative', 0.001)
+    df_event['max_urine'] = df_event.iloc[index_max_urine]['urine_derivative'] 
+    df_event['min_urine'] = df_event.iloc[index_min_urine]['urine_derivative']
+     
+    return df_event, index_max_feces, index_min_feces, index_max_urine, index_min_urine
     
+# def count_fw(df_event):
+#     count = 0
+#     fw = df_event.loc[:, 'flow'].values
+#     fw_out = []
+#     for i in range(len(fw)):
+#         if (not np.isnan(fw[i])) and np.all(np.isnan(fw[i+1:i+5])):
+#             count+=1
+#             fw_out.append(fw[i])
+#     return count, fw_out
+            
 def get_stat(df, start_indexes, end_indexes):
     df_start = df.iloc[start_indexes].reset_index()
     df_end = df.iloc[end_indexes].reset_index()
@@ -149,21 +193,36 @@ def get_stat(df, start_indexes, end_indexes):
     df_stat['ft_change'] = df_end.loc[:, 'feces'] - df_start.loc[:, 'feces']
     df_stat['ut_change'] = df_end.loc[:, 'urine'] - df_start.loc[:, 'urine']
     df_stat['tank_change'] = df_stat['ft_change'] + df_stat['ut_change']
+    fw_all = []
     for i, (start_index, end_index) in enumerate(zip(start_indexes, end_indexes)):
-        df_event = process_event(df, start_index, end_index)
+        df_event, index_max_feces, index_min_feces, index_max_urine, index_min_urine = process_event(df, start_index, end_index)
+        if len(index_min_feces) == 0 or len(index_min_urine) == 0 or len(index_max_feces) == 0 or len(index_max_urine) == 0:
+            fig = plot_event(df_event, [0], [df_event.index[-1]])
+            plt.show()
+            continue
+        
+        df_stat.loc[i, 'time_lag'] = index_min_feces[0] - index_min_urine[0]
+ 
+        df_stat.loc[i, 'first_slope_ratio'] = df_event.loc[index_max_feces[0], 
+                                                          'feces_derivative']/df_event.loc[index_max_urine[0], 
+                                                                                            'urine_derivative']
+        first_fm_index = df_event.loc[:, 'flow'].first_valid_index()
+        df_stat.loc[i, 'first_fm_index'] = first_fm_index
+        if first_fm_index is not None:
+            df_stat.loc[i, 'first_fm_value'] = df_event.loc[first_fm_index, 'flow']
+        else:
+            df_stat.loc[i, 'first_fm_value'] = 0
         df_stat.loc[i, 'event_num'] = i + 1
         df_stat.loc[i, 'duration(s)'] = end_index - start_index
         df_stat.loc[i, 'flowmeter'] = df_event.loc[:, 'flow'].sum()*5
-        df_stat.loc[i, 'num_max_feces'] = len(df_event.loc[(df_event['max_feces']>0.001)])
-        df_stat.loc[i, 'num_max_urine'] = len(df_event.loc[(df_event['max_urine']>0.001)])
+        df_stat.loc[i, 'num_max_feces'] = len(df_event.loc[(df_event['max_feces'] > 0.01)])
+        df_stat.loc[i, 'num_max_urine'] = len(df_event.loc[(df_event['max_urine'] > 0.002)])
     df_stat['flowmeter-tank'] = df_stat['flowmeter'] - df_stat['tank_change']
-    df_stat = df_stat[['event_num', 'duration', 'duration(s)', 'ft_change', 'ut_change', 
-                      'tank_change', 'flowmeter', 'flowmeter-tank', 'num_max_feces', 'num_max_urine']]
 
     return df_stat
 
 def detect_event(df, path_date, th_feces_derivative = 0.001, th_urine_derivative = 0.001, 
-                 th_feces_change = 0.5, th_urine_change = 0.05, th_end_last = 15, th_duration = 60,
+                 th_feces_change = 0.1, th_urine_change = 0.05, th_end_last = 15, th_duration = 60,
                  th_flowmeter_before=300):
     first_valid_index_feces = df.loc[:, 'feces'].first_valid_index() # get the first valid index of feces data
     first_valid_index_urine = df.loc[:, 'urine'].first_valid_index() # get the first valid index of urine data    
