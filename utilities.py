@@ -200,18 +200,29 @@ def get_stat(df, start_indexes, end_indexes):
             fig = plot_event(df_event, [0], [df_event.index[-1]])
             plt.show()
             continue
-        
+            
+        # compare the starting time of the first local minimum of feces or urine
         df_stat.loc[i, 'time_lag'] = index_min_feces[0] - index_min_urine[0]
- 
-        df_stat.loc[i, 'first_slope_ratio'] = df_event.loc[index_max_feces[0], 
-                                                          'feces_derivative']/df_event.loc[index_max_urine[0], 
-                                                                                            'urine_derivative']
-        first_fm_index = df_event.loc[:, 'flow'].first_valid_index()
+        
+        # Based on the first slope ratio: first feces local max / first urine local max
+        first_local_max_feces = df_event.loc[index_max_feces[0], 'feces_derivative']
+        first_local_max_urine = df_event.loc[index_max_urine[0], 'urine_derivative']
+        df_stat.loc[i, 'first_slope_ratio'] = first_local_max_feces/first_local_max_urine
+        
+        # index of the first valid fm data
+        first_fm_index = df_event.loc[:, 'flow'].first_valid_index() 
         df_stat.loc[i, 'first_fm_index'] = first_fm_index
+        
+        # index of the first min in feces and urine tank
+        df_stat.loc[i, 'first_feces_index'] = index_min_feces[0]
+        df_stat.loc[i, 'first_urine_index'] = index_min_urine[0]
+        
+        # value of the first valid fm data, if not valid, the value is zero
         if first_fm_index is not None:
             df_stat.loc[i, 'first_fm_value'] = df_event.loc[first_fm_index, 'flow']
         else:
             df_stat.loc[i, 'first_fm_value'] = 0
+            
         df_stat.loc[i, 'event_num'] = i + 1
         df_stat.loc[i, 'duration(s)'] = end_index - start_index
         df_stat.loc[i, 'flowmeter'] = df_event.loc[:, 'flow'].sum()*5
