@@ -148,13 +148,11 @@ def myboolrelextrema(data, comparator_0, comparator_1, axis=0, order=1, mode='cl
             return results
     return results
 
-    
 def myargrelextrema(data, comparator_0, comparator_1, axis=0, order=1, mode='clip'):
 
     results = myboolrelextrema(data, comparator_0, comparator_1,
                               axis, order, mode)
     return np.nonzero(results)
-
 
 def get_local_max(df_event, column_name, th = 0.005):
     index_max = list(myargrelextrema(df_event.loc[:, column_name].values, np.greater, np.greater_equal, order=15)[0])
@@ -172,7 +170,6 @@ def process_event(df, start_index, end_index):
     index_max_urine, index_min_urine = get_local_max(df_event, 'urine_derivative', 0.001)
     df_event['max_urine'] = df_event.iloc[index_max_urine]['urine_derivative'] 
     df_event['min_urine'] = df_event.iloc[index_min_urine]['urine_derivative']
-     
     return df_event, index_max_feces, index_min_feces, index_max_urine, index_min_urine
     
 # def count_fw(df_event):
