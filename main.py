@@ -47,8 +47,6 @@ def analyze_one_day(args):
     start_indexes, end_indexes = detect_event(df.loc[:], path_date)
     df_stat = get_stat(args, df, start_indexes, end_indexes)
     df_stat.to_csv(os.path.join(path_date, 'stat.csv'), index=False)
-
-
     for file in os.listdir(path_date):
         if file.endswith('.png'):
             os.remove(os.path.join(path_date, file)) 
