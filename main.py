@@ -15,6 +15,8 @@ import warnings
 warnings.filterwarnings("ignore")
 from detection_util import *
 from plot_util import *
+from stat_util import *
+
 
 def analyze_one_day(args):
     path_date = os.path.join('data', args.date) # path to data of the date
@@ -43,12 +45,15 @@ def analyze_one_day(args):
     df['feces_deriv'] = df['feces'].diff(periods=10)/(df['date_time'].diff(periods=10).dt.total_seconds())
     df['urine_deriv'] = df['urine'].diff(periods=10)/(df['date_time'].diff(periods=10).dt.total_seconds())
     start_indexes, end_indexes = detect_event(df.loc[:], path_date)
+    df_stat = get_stat(args, df, start_indexes, end_indexes)
+    df_stat.to_csv(os.path.join(path_date, 'stat.csv'), index=False)
+
 
     for file in os.listdir(path_date):
         if file.endswith('.png'):
             os.remove(os.path.join(path_date, file)) 
     for i, (start_index, end_index) in enumerate(zip(start_indexes, end_indexes)):  
-        fig = plot_event(df, start_index, end_index)
+        fig = plot_event(args, df, start_index, end_index)
         fig.savefig(os.path.join(path_date, 'event_' + str(i+1) + '.png'))
         fig = plot_deriv(df, start_index, end_index)
         fig.savefig(os.path.join(path_date, 'deriv_' + str(i+1) + '.png'))  
