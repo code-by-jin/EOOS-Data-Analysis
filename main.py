@@ -32,7 +32,8 @@ def analyze_one_day(args):
     # flowmeter data
     if args.flowmeter:
         df_flowmeter = read_data(os.path.join(path_date, 'flowmeter.xlsx'), args.date, is_interpolate=False)
-        df_flowmeter.index = df_flowmeter.index + pd.Timedelta(hours=8, minutes=54, seconds=34)
+        if args.flowmeter == 5:
+            df_flowmeter.index = df_flowmeter.index + pd.Timedelta(hours=8, minutes=54, seconds=34)
         df_flowmeter = df_flowmeter[['STALL1']]
         df_flowmeter.columns = ['flow']
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow']/60
@@ -58,7 +59,7 @@ def get_parser():
     """
     parser = argparse.ArgumentParser(description='EOOS Data Analysis')
     parser.add_argument('--date', default='20201224', type=str, help='date to analyze')
-    parser.add_argument('--flowmeter', action = "store_true", help='if include flowmeter')
+    parser.add_argument('--flowmeter', default=None, type=int, help='sample rate for the flowmeter')
     return parser
 
 def main():
