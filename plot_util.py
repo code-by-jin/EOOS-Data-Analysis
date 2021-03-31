@@ -54,7 +54,6 @@ def plot_event(df, start_index, end_index):
     df_event = process_event(df, start_index, end_index)
     plt.style.use('bmh')
     fig, ax = plt.subplots(figsize=(20, 10))    
-    
     ax.plot(df_event.index, df_event.loc[:, 'feces'], color="red", marker="^", label = "feces tank")
     ax.plot(df_event.index, df_event.loc[:, 'feces']+df_event.loc[:, 'urine'], color="black", marker="*", label = "vft+vut")
     ax.set_ylabel("Feces Tank Volume (L)",color="red", fontsize=30) # set y-axis label
@@ -73,6 +72,8 @@ def plot_event(df, start_index, end_index):
     ax2.set_ylabel("Urine Tank Volume (L)",color="blue",fontsize=30)
     ax2.tick_params(axis='y', labelsize=20)
     ax2.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+    plt.axvline(x=0, ls='--', linewidth=1, color = 'purple', label=str(df.loc[start_index, 'date_time']))
+    plt.axvline(x=df_event.index[-1], ls=':',  linewidth=1, color = 'black',  label=str(df.loc[end_index, 'date_time']))
     ax2.legend(loc='center right', fontsize = 20)
     return fig
 
@@ -97,5 +98,7 @@ def plot_deriv(df, start_index, end_index):
     ax2.set_ylabel("Urine Tank Volume (L)",color="blue",fontsize=30)
     ax2.tick_params(axis='y', labelsize=20)
     ax2.yaxis.set_major_formatter(FormatStrFormatter('%.3f'))
+    plt.axvline(x=0, ls='--', linewidth=1, color = 'purple', label=str(df.loc[start_index, 'date_time']))
+    plt.axvline(x=df_event.index[-1], ls=':',  linewidth=1, color = 'black',  label=str(df.loc[end_index, 'date_time']))
     ax2.legend(loc='center right', fontsize = 20)
     return fig

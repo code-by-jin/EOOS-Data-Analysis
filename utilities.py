@@ -128,7 +128,6 @@ def adjust_start_index(df, start_indexes, end_indexes, th_flowmeter_before=300):
             start_indexes[i] = first_valid_flowmeter_index
         last_end_index = end_indexes[i]
     return start_indexes
-   
 
 def myboolrelextrema(data, comparator_0, comparator_1, axis=0, order=1, mode='clip'):
     if((int(order) != order) or (order < 1)):
