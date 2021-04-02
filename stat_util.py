@@ -91,13 +91,13 @@ def get_stat(args, df, start_indexes, end_indexes):
             df_stat.loc[i, 'flowmeter'] = df_event.loc[:, 'flow'].sum()*args.flowmeter
         df_stat.loc[i, 'num_max_feces'] = len(df_event.loc[(df_event['max_feces']>0.001)])
         df_stat.loc[i, 'num_max_urine'] = len(df_event.loc[(df_event['max_urine']>0.001)])
-        # urine first
-        index_ft = df_event.loc[df_event.loc[:, 'feces'] != 0].index[0]
-        index_ut = df_event.loc[df_event.loc[:, 'urine'] != 0].index[0]
-        if index_ut < index_ft:
-            df_stat.loc[i, 'urine_first'] = 1
-        else:
-            df_stat.loc[i, 'urine_first'] = 0
+#         # urine first
+#         index_ft = df_event.loc[df_event.loc[:, 'feces'] != 0].index[0]
+#         index_ut = df_event.loc[df_event.loc[:, 'urine'] != 0].index[0]
+#         if index_ut < index_ft:
+#             df_stat.loc[i, 'urine_first'] = 1
+#         else:
+#             df_stat.loc[i, 'urine_first'] = 0
             
         slope_ratios = []
         for i_max_feces, i_max_urine in zip(index_max_feces, index_max_urine):
@@ -112,9 +112,9 @@ def get_stat(args, df, start_indexes, end_indexes):
     if args.flowmeter:
         df_stat['flowmeter-tank'] = df_stat['flowmeter'] - df_stat['tank_change']
         column_names = ['event_num', 'duration', 'duration(s)', 'ft_change', 'ut_change', 
-                        'tank_change', 'flowmeter', 'flowmeter-tank', 'num_max_feces', 'num_max_urine', 'urine_first']
+                        'tank_change', 'flowmeter', 'flowmeter-tank', 'num_max_feces', 'num_max_urine']
     else:
         column_names = ['event_num', 'duration', 'duration(s)', 'ft_change', 'ut_change', 
-                        'tank_change', 'num_max_feces', 'num_max_urine', 'urine_first']
+                        'tank_change', 'num_max_feces', 'num_max_urine']
     df_stat = df_stat[column_names]
     return df_stat
