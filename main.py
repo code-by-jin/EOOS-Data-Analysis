@@ -1,4 +1,5 @@
 import os, io
+import csv
 import numpy as np
 import datetime
 from pathlib import Path
@@ -17,7 +18,6 @@ from detection_util import *
 from plot_util import *
 from stat_util import *
 
-
 def analyze_one_day(args):
     path_date = os.path.join('data', args.date) # path to data of the date
     # feces tank
@@ -32,15 +32,21 @@ def analyze_one_day(args):
     data_srcs = [df_feces, df_urine]
     
     # flowmeter data
-    if args.flowmeter:
-        df_flowmeter = read_data(os.path.join(path_date, 'flowmeter.xlsx'), args.date, is_interpolate=False)
-        if args.flowmeter == 5:
-            df_flowmeter.index = df_flowmeter.index + pd.Timedelta(hours=8, minutes=54, seconds=34)
+    if args.flowmeter == 5:
+        df_flowmeter = read_data(os.path.join(path_date, 'flowmeter.xlsx'), args.date, is_interpolate=False) 
+        df_flowmeter.index = df_flowmeter.index + pd.Timedelta(hours=8, minutes=54, seconds=34)
         df_flowmeter = df_flowmeter[['STALL1']]
         df_flowmeter.columns = ['flow']
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow']/60
         data_srcs.append(df_flowmeter)
-    
+    if args.flowmeter == 2:
+        df_flowmeter = read_new_flowmeter(os.path.join(path_date, 'flowmeter.xlsx'), args.date, is_interpolate=False) 
+        df_flowmeter = df_flowmeter[['flow']]
+        df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].clip(lower=0.5)
+        df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].replace({0.5:np.nan})
+        df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow']/60
+        data_srcs.append(df_flowmeter)
+        
     df = pd.concat(data_srcs, axis=1).reset_index()
     df['feces_deriv'] = df['feces'].diff(periods=10)/(df['date_time'].diff(periods=10).dt.total_seconds())
     df['urine_deriv'] = df['urine'].diff(periods=10)/(df['date_time'].diff(periods=10).dt.total_seconds())
