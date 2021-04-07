@@ -104,7 +104,6 @@ def read_new_flowmeter(path, date, is_interpolate = True):
         df = pd.read_csv(path, skiprows=1, parse_dates=['Date Time, GMT+05:30'])
     df = df.rename(columns={'Date Time, GMT+05:30': 'date_time', 'FM, LPM (LGR S/N: 20965846)': 'flow'})
     df.columns = df.columns.str.replace(' ', '') # clean: remove spaces in column names
-    print(df.head())
     df = df.groupby('date_time', as_index=True).mean() # combine reduplicative data
     df = df.interpolate(method='pad', limit_direction='forward', axis=0) # fill in NaNs using existing values.
     if is_interpolate:

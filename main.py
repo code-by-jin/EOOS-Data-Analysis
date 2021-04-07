@@ -45,7 +45,6 @@ def analyze_one_day(args):
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].clip(lower=0.5)
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].replace({0.5:np.nan})
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow']/60
-        print(df_flowmeter.head())
         data_srcs.append(df_flowmeter)
         
     df = pd.concat(data_srcs, axis=1).reset_index()
