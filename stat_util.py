@@ -110,15 +110,16 @@ def get_stat(args, df, start_indexes, end_indexes):
             df_stat.loc[i, 'urine_first'] = 0
             
         df_stat.loc[i, 'slope_ratio'] = ''
+        print(len(index_max_feces), len(index_min_feces), len(index_max_urine), len(index_min_urine))
         for i_max_feces, i_min_feces, i_max_urine, i_min_urine in zip(index_max_feces, index_min_feces, 
                                                                       index_max_urine, index_min_urine):
             print(i_max_feces, i_min_feces, i_max_urine, i_min_urine)
             diff_f = i_max_feces - i_min_feces
-            slope_f = (df_event.loc[min(i_max_feces+diff_f, df_event.index[-1]), 'feces'] - 
-                       df_event.loc[max(i_max_feces-diff_f, 0), 'feces'])/30
+            slope_f = (df_event.loc[min(i_max_feces, df_event.index[-1]), 'feces'] - 
+                       df_event.loc[max(i_min_feces, 0), 'feces'])/(i_max_feces-i_min_feces)
             diff_u = i_max_urine - i_min_urine
-            slope_u = (df_event.loc[min(i_max_feces+diff_u, df_event.index[-1]), 'urine'] - 
-                       df_event.loc[max(i_max_feces-diff_u, 0),'urine'])/30
+            slope_u = (df_event.loc[min(i_max_urine, df_event.index[-1]), 'urine'] - 
+                       df_event.loc[max(i_min_urine, 0),'urine'])/(i_max_urine-i_min_urine)
             df_stat.loc[i, 'slope_ratio'] = df_stat.loc[i, 'slope_ratio']+' '+str(slope_f/slope_u)
 
     if args.flowmeter:
