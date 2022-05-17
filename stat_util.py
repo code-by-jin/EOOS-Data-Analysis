@@ -52,9 +52,13 @@ def get_local_max(df_event, column_name, th = 0.005):
 #     return index_max, index_min
     
 def process_event(df, start_index, end_index):
+
+#     print(df.head())
     df_event = df.loc[start_index:end_index].reset_index()
-    df_event.loc[:, 'feces'] = df_event.loc[:, 'feces'] - df_event.loc[0, 'feces']
-    df_event.loc[:, 'urine'] = df_event.loc[:, 'urine'] - df_event.loc[0, 'urine']
+    first_valid_index_feces = df_event.loc[:, 'feces'].first_valid_index() # get the first valid index of feces data
+    first_valid_index_urine = df_event.loc[:, 'urine'].first_valid_index()
+    df_event.loc[:, 'feces'] = df_event.loc[:, 'feces'] - df_event.loc[first_valid_index_feces, 'feces']
+    df_event.loc[:, 'urine'] = df_event.loc[:, 'urine'] - df_event.loc[first_valid_index_urine, 'urine']
     index_max_feces, index_min_feces = get_local_max(df_event, 'feces_deriv', 0.01)
     df_event['max_feces'] = df_event.iloc[index_max_feces]['feces_deriv']
     df_event['min_feces'] = df_event.iloc[index_min_feces]['feces_deriv']
@@ -110,7 +114,7 @@ def get_stat(args, df, start_indexes, end_indexes):
             df_stat.loc[i, 'urine_first'] = 0
             
         df_stat.loc[i, 'slope_ratio'] = ''
-        print(len(index_max_feces), len(index_min_feces), len(index_max_urine), len(index_min_urine))
+#         print(len(index_max_feces), len(index_min_feces), len(index_max_urine), len(index_min_urine))
         for i_max_feces, i_min_feces, i_max_urine, i_min_urine in zip(index_max_feces, index_min_feces, 
                                                                       index_max_urine, index_min_urine):
             print(i_max_feces, i_min_feces, i_max_urine, i_min_urine)

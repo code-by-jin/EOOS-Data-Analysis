@@ -21,7 +21,7 @@ def plot_event(args, df, start_index, end_index):
     ax.scatter(index_min_feces, df_event.loc[index_min_feces, 'feces'], c='red', s=200, marker="o")
     ax.plot(df_event.index, df_event.loc[:, 'feces']+df_event.loc[:, 'urine'], color="black", marker="*", label = "vft+vut")
     ax.set_ylabel("Feces Tank Volume (L)",color="red", fontsize=30) # set y-axis label
-    if args.flowmeter:
+    if args and args.flowmeter:
         ax.axhline(y=df_event.loc[:, 'flow'].sum()*args.flowmeter, color="black", label = "volume out")
     ax.set_xlabel('Seconds',fontsize=30)
     ax.tick_params(axis='x', labelsize=20)
@@ -33,7 +33,7 @@ def plot_event(args, df, start_index, end_index):
     ax2.plot(df_event.index, df_event.loc[:, 'urine'], color="blue", marker="v", label = "urine tank")
     ax2.scatter(index_max_urine, df_event.loc[index_max_urine, 'urine'], c='blue', s=200, marker="s")
     ax2.scatter(index_min_urine, df_event.loc[index_min_urine, 'urine'], c='blue', s=200, marker="o")
-    if args.flowmeter:
+    if args and args.flowmeter:
         ax2.scatter(df_event.index, df_event.loc[:, 'flow'], color="blue", marker="o", label = "flowmeter")
     ax2.set_ylabel("Urine Tank Volume (L)",color="blue",fontsize=30)
     ax2.tick_params(axis='y', labelsize=20)
