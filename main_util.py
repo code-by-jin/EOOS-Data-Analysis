@@ -15,59 +15,60 @@ from matplotlib.ticker import FormatStrFormatter
 import warnings
 warnings.filterwarnings("ignore")
 from detection_util import *
-from plot_util import *
-# from stat_util import *
 
 def analyze_one_day(data_dir, date, flowmeter = None, door = False):
     path_date = os.path.join(data_dir, date) # path to data of the date
-    # feces tank
+    # read feces tank data
     df_feces = read_data(os.path.join(path_date, 'feces.xlsx'), date) 
     df_feces = df_feces[['weight']]
     df_feces.columns = ['feces']
     
-    # urine tank
+    # read urine tank data
     df_urine = read_data(os.path.join(path_date, 'urine.xlsx'), date) 
     df_urine = df_urine[['weight']]
     df_urine.columns = ['urine']
+    
+    # combine urine and feces data into one dataframe
     df = pd.concat([df_feces, df_urine], axis=1)
     df = df.dropna()
     # flowmeter data
     if flowmeter:
         if flowmeter == 5:
+            # read flowmeter data with sample rate of /5s
             df_flowmeter = read_data(os.path.join(path_date, 'flowmeter.xlsx'), date, is_interpolate=False) 
+            # there was a time diff between fw and weight scales
             df_flowmeter.index = df_flowmeter.index + pd.Timedelta(hours=8, minutes=54, seconds=34)
             df_flowmeter = df_flowmeter[['STALL1']]
             df_flowmeter.columns = ['flow']
         if flowmeter == 2:
+            # read flowmeter data with sample rate of /2s
             df_flowmeter = read_new_flowmeter(os.path.join(path_date, 'flowmeter.xlsx'), date, is_interpolate=False) 
             df_flowmeter = df_flowmeter[['flow']]
+            
+        # For fm, any number lower than 0.5 treated as 0
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].clip(lower=0.5)
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].replace({0.5:np.nan})
+        # Resample the fm data to /1s
         df_flowmeter = df_flowmeter.resample('1S').pad()
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow'].replace({np.nan:0})
+        # Change the unit from /1m to /1s
         df_flowmeter.loc[:, 'flow'] = df_flowmeter.loc[:, 'flow']/60
         df = pd.concat([df, df_flowmeter], axis=1)
-    if door:
-        df_door = read_data(path_door, date, is_interpolate = False)
-        df = pd.concat([df, df_door], axis=1)
 
     df = df.reset_index()
+    # Derivatives were calculated based on five-second diff
     df['feces_deriv'] = df['feces'].diff(periods=5)/(df['date_time'].diff(periods=5).dt.total_seconds())
     df['urine_deriv'] = df['urine'].diff(periods=5)/(df['date_time'].diff(periods=5).dt.total_seconds())
     df['feces_deriv_2'] = df['feces_deriv'].diff(periods=5)/(df['date_time'].diff(periods=5).dt.total_seconds())
     df['urine_deriv_2'] = df['urine_deriv'].diff(periods=5)/(df['date_time'].diff(periods=5).dt.total_seconds())
     start_indexes, end_indexes = detect_event(df.loc[:], path_date, th_feces_deriv=0.0, 
                                               th_urine_deriv=0.0, th_end_last=5, th_duration=60)
-    if door:
-        df['door_deriv'] = df['door'].diff(periods=1)/(df['date_time'].diff(periods=1).dt.total_seconds())
-        door_close = df.loc[df.loc[:, 'door_deriv'] > 0, :].index.values
-        door_open= df.loc[df.loc[:, 'door_deriv'] < 0, :].index.values
-        return df, start_indexes, end_indexes, door_close, door_open
-    else:
-        return df, start_indexes, end_indexes
-    
-def process_event(df, start_index, end_index):
 
+    return df, start_indexes, end_indexes
+    
+
+def process_event(df, start_index, end_index):
+    # Get single event as a dataframe w index from 0
     df_event = df.loc[start_index:end_index].reset_index()
     first_valid_index_feces = df_event.loc[:, 'feces'].first_valid_index() # get the first valid index of feces data
     first_valid_index_urine = df_event.loc[:, 'urine'].first_valid_index()
