@@ -83,7 +83,7 @@ def gmm_modeling(dataset):
              weights[idx_feces]), color='red', lw=1, ls=":", label=label_2)
 
     plt.axvline(x=threshold, ls='-', linewidth=1,
-                color='red', label='t = %d' % threshold)
+                color='black', label='t = %d' % threshold)
     ax.set_xlabel("Duration (s)", fontsize=14)
     ax.set_ylabel("Density", fontsize=14)
     plt.legend(fontsize=14)
