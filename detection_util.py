@@ -117,4 +117,4 @@ def detect_event(
         end_idxes,
         th_duration,
         )
-    return start_idxes, end_idxes
+    return start_idxes, end_idxes    

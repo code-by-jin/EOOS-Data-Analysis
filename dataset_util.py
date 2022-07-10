@@ -2,7 +2,7 @@ import os
 import pandas as pd
 
 
-def read_weight_scale(path, date):
+def read_weight_scale(path: str, date: str):
     # first read xlsx file, if not exist, try csv file
     if os.path.exists(path):
         df = pd.ExcelFile(path)
@@ -28,7 +28,7 @@ def read_weight_scale(path, date):
     return df
 
 
-def read_data(data_dir, date, periods=5):
+def read_data(data_dir: str, date: str, periods: int = 5):
     path_date = os.path.join(data_dir, date)
 
     df_feces = read_weight_scale(os.path.join(path_date, 'feces.xlsx'), date)
@@ -53,3 +53,5 @@ def read_data(data_dir, date, periods=5):
     df['urine_deriv'] = df['urine'].diff(periods=periods)/time_diff
     df['feces_deriv_2'] = df['feces_deriv'].diff(periods=periods)/time_diff
     df['urine_deriv_2'] = df['urine_deriv'].diff(periods=periods)/time_diff
+
+    return df
