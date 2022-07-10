@@ -1,22 +1,12 @@
-import os, io
-import csv
+import os
+import warnings
 import numpy as np
-import datetime
-from pathlib import Path
-import argparse
-
 import pandas as pd
+warnings.filterwarnings("ignore")
 pd.set_option("display.precision", 3)
 
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from matplotlib.ticker import FormatStrFormatter
 
-import warnings
-warnings.filterwarnings("ignore")
-from detection_util import *
-
-def read_data(path, date, is_interpolate = True):
+def read_data(path, date, is_interpolate=True):
     if os.path.exists(path):
         df = pd.ExcelFile(path) # read feces file
         sheet_name = df.sheet_names[0] # use the first sheet in the .xlsx file
