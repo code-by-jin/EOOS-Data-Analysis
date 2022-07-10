@@ -85,7 +85,7 @@ def detect_event(
     th_duration: int = 60,
 ):
     df = get_valid_dataset(df)
-    start_idx, end_idx = [], []
+    start_idxes, end_idxes = [], []
     curr_idx = df.index.values[0]
     while curr_idx < df.index[-1]:
         # start point detection
@@ -106,16 +106,15 @@ def detect_event(
                 th_urine_change,
                 )
             if flag_event:
-                start_idx.append(start_idx)
-                end_idx.append(end_idx)
+                start_idxes.append(start_idx)
+                end_idxes.append(end_idx)
             curr_idx = end_idx + 1
         else:
             curr_idx += 1
     # event combination
-    start_idx, end_idx = combine_close_events(
-        df,
-        start_idx,
-        end_idx,
+    start_idxes, end_idxes = combine_close_events(
+        start_idxes,
+        end_idxes,
         th_duration,
         )
-    return start_idx, end_idx
+    return start_idxes, end_idxes
