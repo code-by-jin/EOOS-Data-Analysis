@@ -87,38 +87,3 @@ def detect_event(df, path_date, th_feces_deriv=0, th_urine_deriv=0,
             curr_index += 1  
     start_indexes, end_indexes = combine_close_events(df, start_indexes, end_indexes, th_duration)
     return start_indexes, end_indexes
-
-def read_data(path, date, is_interpolate = True):
-    if os.path.exists(path):
-        df = pd.ExcelFile(path) # read feces file
-        sheet_name = df.sheet_names[0] # use the first sheet in the .xlsx file
-        df = df.parse(sheet_name, skiprows=0, parse_dates=[['date', 'time']]) 
-    else:
-        path = path.replace('xlsx', 'csv')
-        df = pd.read_csv(path, parse_dates=[['date', 'time']])
-    df.columns = df.columns.str.replace(' ', '') # clean: remove spaces in column names
-    df = df.groupby('date_time', as_index=True).mean() # combine reduplicative data
-    df = df.interpolate(method='pad', limit_direction='forward', axis=0) # fill in NaNs using existing values.
-    if is_interpolate:
-        df = df.resample('1S').pad()
-        df = df.rolling(window=10).mean()
-    df.index = df.index.map(lambda t: t.replace(year=int(date[:4]), month=int(date[4:6]), day=int(date[6:8])))
-    return df
-
-def read_new_flowmeter(path, date, is_interpolate = True):
-    if os.path.exists(path):
-        df = pd.ExcelFile(path) # read feces file
-        sheet_name = df.sheet_names[0] # use the first sheet in the .xlsx file
-        df = df.parse(sheet_name, skiprows=1, parse_dates=['Date Time, GMT+05:30']) 
-    else:
-        path = path.replace('xlsx', 'csv')
-        df = pd.read_csv(path, skiprows=1, parse_dates=['Date Time, GMT+05:30'])
-    df = df.rename(columns={'Date Time, GMT+05:30': 'date_time', 'FM, LPM (LGR S/N: 20965846)': 'flow'})
-    df.columns = df.columns.str.replace(' ', '') # clean: remove spaces in column names
-    df = df.groupby('date_time', as_index=True).mean() # combine reduplicative data
-    df = df.interpolate(method='pad', limit_direction='forward', axis=0) # fill in NaNs using existing values.
-    if is_interpolate:
-        df = df.resample('1S').pad()
-        df = df.rolling(window=10).mean()
-    df.index = df.index.map(lambda t: t.replace(year=int(date[:4]), month=int(date[4:6]), day=int(date[6:])))
-    return df
